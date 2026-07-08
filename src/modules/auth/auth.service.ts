@@ -1,14 +1,12 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
-import { RegisterUserPayload } from "./auth.interface";
+import { IloginUser, RegisterUserPayload } from "./auth.interface";
 import config from "../../config";
-
-
-
+import { jwtUtils } from "../../utils/jwt";
 
 const registeruserIntoDB = async (payload: RegisterUserPayload) => {
-    const {name , email, password , profilePhoto } = payload;
-    const isUserExist = await prisma.user.findUnique({
+  const { name, email, password, profilePhoto } = payload;
+  const isUserExist = await prisma.user.findUnique({
     where: { email },
   });
 
@@ -28,7 +26,7 @@ const registeruserIntoDB = async (payload: RegisterUserPayload) => {
       password: hashedPasswod,
       profile: {
         create: {
-          profilePhoto ,
+          profilePhoto,
         },
       },
     },
@@ -46,9 +44,48 @@ const registeruserIntoDB = async (payload: RegisterUserPayload) => {
   return user;
 };
 
+const loginUser = async (payload: IloginUser) => {
+  const { email, password } = payload;
 
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email },
+  });
 
+  if (user.status === "BANNED") {
+    throw new Error("Your account has been Banned. please contact support.");
+  }
 
-export const authService={
-    registeruserIntoDB
-}
+  const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordMatch) {
+    throw new Error("Passord is incorrect");
+  }
+
+  const jwtpayload = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtpayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in
+  );
+  const refreshToken = jwtUtils.createToken(
+    jwtpayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
+export const authService = {
+  registeruserIntoDB,
+  loginUser
+};

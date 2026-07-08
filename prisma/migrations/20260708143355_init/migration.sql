@@ -8,7 +8,7 @@ CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'BANNED');
 CREATE TABLE "profile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "profilePhoto" TEXT NOT NULL,
+    "profilePhoto" TEXT,
     "phone" VARCHAR(20),
     "bio" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
