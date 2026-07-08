@@ -11,11 +11,13 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: config.app_url,
+    credentials: true
   })
 );
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("hello world");
+  console.log(config.database_url)
 });
 
 
