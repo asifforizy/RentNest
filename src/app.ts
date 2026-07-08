@@ -1,7 +1,9 @@
 import cookieParser from "cookie-parser";
 import express, { Application, Request, Response } from "express";
 import config from "./config";
-import cors from "cors";
+import cors from 'cors';
+import { authRoutes } from "./modules/auth/auth.route";
+
 
 
 const app: Application = express();
@@ -17,8 +19,9 @@ app.use(
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("hello world");
-  console.log(config.database_url)
 });
 
+
+app.use("/api/auth", authRoutes);
 
 export default app;

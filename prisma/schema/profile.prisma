@@ -4,7 +4,7 @@ model Profile {
     userId String @unique
     user   User   @relation(fields: [userId], references: [id])
 
-    profilePhoto String
+    profilePhoto String?
     phone        String?  @db.VarChar(20)
     bio          String?
     createdAt    DateTime @default(now())
