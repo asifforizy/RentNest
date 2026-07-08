@@ -3,6 +3,8 @@ import express, { Application, Request, Response } from "express";
 import config from "./config";
 import cors from 'cors';
 import { authRoutes } from "./modules/auth/auth.route";
+import { notFound } from "./middleware/notFound";
+import { globalErrorHandler } from "./middleware/globalErrorHandler";
 
 
 
@@ -24,4 +26,15 @@ app.get("/", async (req: Request, res: Response) => {
 
 app.use("/api/auth", authRoutes);
 
+
+
+
+
+
+
+
+
+
+app.use(globalErrorHandler)
+app.use(notFound)
 export default app;
