@@ -5,7 +5,7 @@ model User {
     password     String
     profilePhoto String?
     phone        String?    @db.VarChar(20)
-    bio          String?
+    address      String?
     role         UserRole   @default(TENANT)
     status       UserStatus @default(ACTIVE)
     createdAt    DateTime   @default(now())

@@ -3,6 +3,9 @@ export interface RegisterUserPayload {
   email: string;
   password: string;
   profilePhoto?: string;
+  phone?: string;
+  address?: string;
+  role?: "TENANT" | "LANDLORD";
 }
 
 export interface IloginUser {

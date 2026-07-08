@@ -5,7 +5,7 @@ import config from "../../config";
 import { jwtUtils } from "../../utils/jwt";
 
 const registeruserIntoDB = async (payload: RegisterUserPayload) => {
-  const { name, email, password, profilePhoto } = payload;
+  const { name, email, password, profilePhoto, phone, address, role } = payload;
   const isUserExist = await prisma.user.findUnique({
     where: { email },
   });
@@ -25,8 +25,10 @@ const registeruserIntoDB = async (payload: RegisterUserPayload) => {
       email,
       password: hashedPasswod,
       profilePhoto,
-    }
-
+      phone,
+      address,
+      role,
+    },
   });
 
   const user = await prisma.user.findUnique({
@@ -35,7 +37,6 @@ const registeruserIntoDB = async (payload: RegisterUserPayload) => {
       email: createdUser.email || email,
     },
     omit: { password: true },
-    
   });
 
   return user;
@@ -82,8 +83,6 @@ const loginUser = async (payload: IloginUser) => {
   };
 };
 
-
-
 const getmyProfileFromDB = async (userId: string) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -92,8 +91,9 @@ const getmyProfileFromDB = async (userId: string) => {
 
   return user;
 };
+
 export const authService = {
   registeruserIntoDB,
   loginUser,
-  getmyProfileFromDB
+  getmyProfileFromDB,
 };
