@@ -13,3 +13,10 @@ enum Availability {
   AVAILABLE
   UNAVAILABLE
 }
+
+
+enum Categories {
+  APARTMENT
+  HOUSE
+  STUDIO
+}

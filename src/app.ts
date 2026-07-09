@@ -6,6 +6,7 @@ import { authRoutes } from "./modules/auth/auth.route";
 import { notFound } from "./middleware/notFound";
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 import { lanlordRoutes } from "./modules/landlord/landlord.route";
+import { categoryRoutes } from "./modules/category/category.route";
 
 
 
@@ -26,7 +27,8 @@ app.get("/", async (req: Request, res: Response) => {
 
 
 app.use("/api/auth", authRoutes);
-app.use("api/landlord",lanlordRoutes)
+app.use("/api/landlord",lanlordRoutes)
+app.use("/api/categories",categoryRoutes)
 
 
 
