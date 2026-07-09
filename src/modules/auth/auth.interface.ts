@@ -5,10 +5,19 @@ export interface RegisterUserPayload {
   profilePhoto?: string;
   phone?: string;
   address?: string;
-  role?: "TENANT" | "LANDLORD";
+  role?: "TENANT" | "LANDLORD" | "ADMIN";
 }
 
 export interface IloginUser {
   email: string;
   password: string;
+}
+
+export interface IUpdate {
+  name: string;
+  password: string;
+  profilePhoto?: string;
+  phone?: string;
+  address?: string;
+  role?: "TENANT" | "LANDLORD" | "ADMIN";
 }
