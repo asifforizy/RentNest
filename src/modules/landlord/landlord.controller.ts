@@ -31,7 +31,21 @@ const getMyProperties = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const updateProperty = catchAsync(async (req: Request, res: Response) => {
+  const landlordId = req.user?.id as string;
+  const result = await landlordService.updatePropertyIntoDB(req.params.id as string, landlordId, req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Property updated successfully",
+    data: result,
+  });
+});
+
 export const lanlordController = {
   createPropertyListing,
   getMyProperties,
+  updateProperty,
 };
