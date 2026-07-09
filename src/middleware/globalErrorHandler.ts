@@ -77,7 +77,7 @@ export const globalErrorHandler = (
     success: false,
     statusCode : statusCode,
     message : message,
-    error: err
+    error: err.name
       
   });
 };
