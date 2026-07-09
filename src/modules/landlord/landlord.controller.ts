@@ -10,13 +10,28 @@ const createPropertyListing = catchAsync(async (req: Request, res: Response) => 
   const result = await landlordService.createPropertyIntoDB(landlordId, req.body);
 
   sendResponse(res, {
-    statusCode: httpStatus.CREATED,
     success: true,
+    statusCode: httpStatus.CREATED, 
     message: "Property listing created successfully",
+    data: result,
+  });
+});
+
+
+
+const getMyProperties = catchAsync(async (req: Request, res: Response) => {
+  const id = req.user?.id;
+  const result = await landlordService.getMyPropertiesFromDB(id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Your properties retrieved successfully",
     data: result,
   });
 });
 
 export const lanlordController = {
   createPropertyListing,
+  getMyProperties,
 };

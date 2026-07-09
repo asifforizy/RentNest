@@ -1,12 +1,9 @@
-import httpStatus from "http-status";
+
 import { prisma } from "../../lib/prisma";
 
 import { CreatePropertyPayload } from "./landlord.interface";
 
-const createPropertyIntoDB = async (
-  landlordId: string,
-  payload: CreatePropertyPayload
-) => {
+const createPropertyIntoDB = async (landlordId: string,payload: CreatePropertyPayload) => {
   const { categoryName, ...rest } = payload;
 
   if (categoryName) {
@@ -28,6 +25,21 @@ const createPropertyIntoDB = async (
   });
 };
 
+const getMyPropertiesFromDB = async (landlordId: string) => {
+  return prisma.property.findMany({
+    where: { landlordId },
+    include: { category: true },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+
+
+
+
+
+
 export const landlordService = {
   createPropertyIntoDB,
+  getMyPropertiesFromDB,
 };
