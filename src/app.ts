@@ -28,9 +28,9 @@ app.get("/", async (req: Request, res: Response) => {
 
 
 app.use("/api/auth", authRoutes);
-app.use("/api/landlord",lanlordRoutes)
 app.use("/api/categories",categoryRoutes)
 app.use("/api/properties",propertyRoutes)
+app.use("/api/landlord",lanlordRoutes)
 
 
 
@@ -40,6 +40,6 @@ app.use("/api/properties",propertyRoutes)
 
 
 
-app.use(globalErrorHandler)
 app.use(notFound)
+app.use(globalErrorHandler)
 export default app;

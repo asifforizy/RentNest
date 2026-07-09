@@ -1,31 +1,21 @@
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
-import { landlordService } from "./landlord.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
+import { propertyService } from "../properties/properties.service";
+import { landlordService } from "./landlord.service";
 
-const createPropertyListing = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+const createPropertyListing = catchAsync(async (req: Request, res: Response) => {
+  const landlordId = (req.user as { id: string }).id;
+  const result = await landlordService.createPropertyIntoDB(landlordId, req.body);
 
-    if(!req.user) {
-       throw new Error("Forbiddin, Unauthorized access")
-      }
- 
-      if (req.user.role !== "LANDLORD") {
-        throw new Error("Only landlords can list properties")
-      }
-
-    const payload = req.body;
-    const property = await landlordService.createPropertyListingInDB(payload);
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.CREATED,
-      message: "Property listed succesfully",
-      data: { property },
-    });
-  }
-);
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Property listing created successfully",
+    data: result,
+  });
+});
 
 export const lanlordController = {
   createPropertyListing,

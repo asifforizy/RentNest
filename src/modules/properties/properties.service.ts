@@ -5,7 +5,6 @@ import { prisma } from "../../lib/prisma";
 const getAllPropertiesFromDB = async () => {
   const result = await prisma.property.findMany({
     include: {
-      category: true,
       landlord: {
         select: {
           id: true,
@@ -28,7 +27,6 @@ const getPropertyByIdFromDB = async (id: string) => {
       id,
     },
     include: {
-      category: true,
       landlord: {
         select: {
           id: true,

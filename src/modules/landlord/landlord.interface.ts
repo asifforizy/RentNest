@@ -1,10 +1,9 @@
-export interface ICreateProperty {
+export interface CreatePropertyPayload {
   title: string;
-  category: "APARTMENT" | "HOUSE" | "STUDIO";
+  description: string;
   rentPrice: number;
-  description?: string;
+  categoryName?: string;
   propertyPhoto?: string;
   city?: string;
   country?: string;
-  availability?: "AVAILABLE" | "UNAVAILABLE";
 }
