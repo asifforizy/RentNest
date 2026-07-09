@@ -8,8 +8,8 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   const result = await categoryService.createCategoryIntoDB(req.body);
 
   sendResponse(res, {
-    statusCode: httpStatus.CREATED,
     success: true,
+    statusCode: httpStatus.CREATED,
     message: "Category created successfully",
     data: result,
   });
@@ -19,8 +19,8 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
   const result = await categoryService.getAllCategoriesFromDB();
 
   sendResponse(res, {
-    statusCode: httpStatus.OK,
     success: true,
+    statusCode: httpStatus.OK,
     message: "Categories retrieved successfully",
     data: result,
   });
@@ -33,8 +33,8 @@ const updateCategory = catchAsync(async (req: Request, res: Response) => {
   );
 
   sendResponse(res, {
-    statusCode: httpStatus.OK,
     success: true,
+    statusCode: httpStatus.OK,
     message: "Category updated successfully",
     data: result,
   });
@@ -44,8 +44,8 @@ const deleteCategory = catchAsync(async (req: Request, res: Response) => {
   const result = await categoryService.deleteCategoryFromDB( req.params.id as string);
 
   sendResponse(res, {
-    statusCode: httpStatus.OK,
     success: true,
+    statusCode: httpStatus.OK,
     message: "Category deleted successfully",
     data: result,
   });

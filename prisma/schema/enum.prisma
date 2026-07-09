@@ -15,8 +15,3 @@ enum Availability {
 }
 
 
-enum Categories {
-  APARTMENT
-  HOUSE
-  STUDIO
-}
