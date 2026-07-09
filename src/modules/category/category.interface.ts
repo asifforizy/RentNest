@@ -1,3 +1,4 @@
-export interface ICreatecategory{
-    name: string
+export interface ICreatecategory {
+  id: string;
+  name: string;
 }

@@ -3,9 +3,10 @@ import { prisma } from "../../lib/prisma";
 import { ICreatecategory } from "./category.interface";
 
 const createCategoryIntoDB = async (payload: ICreatecategory) => {
+  const { name } = payload;
   const exists = await prisma.category.findUnique({
     where: {
-      name: payload.name,
+      name,
     },
   });
 
@@ -14,7 +15,7 @@ const createCategoryIntoDB = async (payload: ICreatecategory) => {
   }
 
   const result = await prisma.category.create({
-    data: payload,
+    data: { name },
   });
 
   return result;
@@ -28,7 +29,17 @@ const getAllCategoriesFromDB = async () => {
   });
 };
 
+const updateCategoryIntoDB = async (id: string, payload: ICreatecategory) => {
+  const result = await prisma.category.update({
+    where: { id },
+    data: payload,
+  });
+
+  return result;
+};
+
 export const categoryService = {
   createCategoryIntoDB,
   getAllCategoriesFromDB,
+  updateCategoryIntoDB,
 };
