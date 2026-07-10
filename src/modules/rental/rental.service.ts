@@ -1,9 +1,8 @@
-
 import { Availability } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { CreateRentalRequestPayload } from "./rental.interface";
 
-const createRentalRequestIntoDB = async (tenantId: string, payload: CreateRentalRequestPayload) => {
+const createRentalRequestIntoDB = async ( tenantId: string, payload: CreateRentalRequestPayload) => {
   const { propertyId, moveInDate, message } = payload;
   const property = await prisma.property.findUnique({
     where: {
@@ -62,8 +61,6 @@ const createRentalRequestIntoDB = async (tenantId: string, payload: CreateRental
   return rentalRequest;
 };
 
-
-
 const getMyRentalRequestsFromDB = async (tenantId: string) => {
   return prisma.rentalRequest.findMany({
     where: { tenantId },
@@ -73,9 +70,34 @@ const getMyRentalRequestsFromDB = async (tenantId: string) => {
   });
 };
 
+const getRentalRequestByIdFromDB = async ( id: string, userId: string, role: string) => {
+  const rentalRequest = await prisma.rentalRequest.findUnique({
+    where: { id },
+    include: {
+      property: true,
+      tenant: {
+        select: { id: true, name: true, email: true },
+      },
+      payment: true,
+    },
+  });
+
+  if (!rentalRequest) {
+    throw new Error("Rental request not found");
+  }
+
+  const isOwnerTenant = rentalRequest.tenantId === userId;
+  const isOwnerLandlord = rentalRequest.property.landlordId === userId;
+
+  if (!isOwnerTenant && !isOwnerLandlord && role !== "ADMIN") {
+    throw new Error("You do not have access to this rental request");
+  }
+
+  return rentalRequest;
+};
 
 export const rentalService = {
   createRentalRequestIntoDB,
   getMyRentalRequestsFromDB,
-  
+  getRentalRequestByIdFromDB,
 };
