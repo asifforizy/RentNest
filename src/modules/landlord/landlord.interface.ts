@@ -9,3 +9,14 @@ export interface CreatePropertyPayload {
   country?: string;
   availability?: "AVAILABLE" | "UNAVAILABLE"
 }
+
+
+export type UpdateRentalRequestStatusPayload = {
+  status: "APPROVED" | "REJECTED" | "CANCELLED" | "PENDING";
+};
+
+
+
+
+
+  

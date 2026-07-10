@@ -13,7 +13,7 @@ router.get("/my-properties", auth(UserRole.LANDLORD) , lanlordController.getMyPr
 router.patch("/properties/:id", auth(UserRole.LANDLORD) , lanlordController.updateProperty);
 router.delete("/properties/:id", auth(UserRole.LANDLORD) , lanlordController.deleteProperty);
 router.get("/requests", auth(UserRole.LANDLORD), lanlordController.getMyRentalRequests);
-
+router.patch("/requests/:id", auth(UserRole.LANDLORD), lanlordController.updateRentalRequestStatus);
 
 
 

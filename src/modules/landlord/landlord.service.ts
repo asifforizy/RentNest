@@ -1,6 +1,5 @@
 import { prisma } from "../../lib/prisma";
-
-import { CreatePropertyPayload } from "./landlord.interface";
+import { CreatePropertyPayload, UpdateRentalRequestStatusPayload } from "./landlord.interface";
 
 const createPropertyIntoDB = async (landlordId: string,payload: CreatePropertyPayload) => {
   const { categoryId, ...rest } = payload;
@@ -79,10 +78,51 @@ const getRequestsForMyPropertiesFromDB = async (landlordId: string) => {
   });
 };
 
+
+
+
+const updateRentalRequestStatusIntoDB = async (id: string, landlordId: string,payload: UpdateRentalRequestStatusPayload) => {
+  const rentalRequest = await prisma.rentalRequest.findUnique({
+    where: { id },
+    include: { property: true },
+  });
+
+  if (!rentalRequest) {
+    throw new Error("Rental request not found");
+  }
+
+  if (rentalRequest.property.landlordId !== landlordId) {
+    throw new Error( "You do not own the property for this request");
+  }
+
+  if (rentalRequest.status !== "PENDING") {
+    throw new Error("This request has already been processed");
+  }
+
+  return prisma.rentalRequest.update({
+    where: { id },
+    data: { status: payload.status },
+  });
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const landlordService = {
   createPropertyIntoDB,
   getMyPropertiesFromDB,
   updatePropertyIntoDB,
   deletePropertyFromDB,
   getRequestsForMyPropertiesFromDB,
+  updateRentalRequestStatusIntoDB
 };
