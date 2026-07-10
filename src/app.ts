@@ -14,6 +14,7 @@ import { adminRoutes } from "./modules/Admin/admin.route";
 
 
 
+
 const app: Application = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,6 +37,7 @@ app.use("/api/properties",propertyRoutes)
 app.use("/api/landlord",lanlordRoutes)
 app.use("/api/rentals",rentalRoutes)
 app.use("/api/admin", adminRoutes)
+
 
 
 

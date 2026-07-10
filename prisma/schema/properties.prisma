@@ -4,13 +4,13 @@ model Property {
   landlordId    String
   landlord       User            @relation( fields: [landlordId], references: [id] , onDelete: Cascade )
 
+
+  categoryId String?
+  category Category? @relation(fields: [categoryId], references: [id])
+
   title         String
-
-  categoryName String?
-  category Category? @relation(fields: [categoryName], references: [name])
-
   description   String
-  rentPrice     Decimal
+  rentPrice     Float
   propertyPhoto String?
   city          String?
   country       String?

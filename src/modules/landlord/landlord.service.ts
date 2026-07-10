@@ -2,15 +2,12 @@ import { prisma } from "../../lib/prisma";
 
 import { CreatePropertyPayload } from "./landlord.interface";
 
-const createPropertyIntoDB = async (
-  landlordId: string,
-  payload: CreatePropertyPayload
-) => {
-  const { categoryName, ...rest } = payload;
+const createPropertyIntoDB = async (landlordId: string,payload: CreatePropertyPayload) => {
+  const { categoryId, ...rest } = payload;
 
-  if (categoryName) {
+  if (categoryId) {
     const category = await prisma.category.findUnique({
-      where: { name: categoryName },
+      where: { id: categoryId },
     });
 
     if (!category) {
@@ -22,7 +19,7 @@ const createPropertyIntoDB = async (
     data: {
       ...rest,
       landlordId,
-      categoryName,
+      categoryId,
     },
   });
 };
@@ -72,9 +69,20 @@ const deletePropertyFromDB = async (id: string, landlordId: string) => {
 };
 
 
+
+
+const getRequestsForMyPropertiesFromDB = async (landlordId: string) => {
+  return prisma.rentalRequest.findMany({
+    where: { property: { landlordId } },
+    include: { property: true, tenant: { select: { id: true, name: true, email: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export const landlordService = {
   createPropertyIntoDB,
   getMyPropertiesFromDB,
   updatePropertyIntoDB,
-  deletePropertyFromDB
+  deletePropertyFromDB,
+  getRequestsForMyPropertiesFromDB,
 };

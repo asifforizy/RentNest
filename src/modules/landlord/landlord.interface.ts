@@ -3,7 +3,7 @@ export interface CreatePropertyPayload {
   title: string;
   description: string;
   rentPrice: number;
-  categoryName?: string;
+  categoryId?: string;
   propertyPhoto?: string;
   city?: string;
   country?: string;
