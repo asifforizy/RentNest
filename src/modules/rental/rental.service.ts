@@ -62,6 +62,20 @@ const createRentalRequestIntoDB = async (tenantId: string, payload: CreateRental
   return rentalRequest;
 };
 
+
+
+const getMyRentalRequestsFromDB = async (tenantId: string) => {
+  return prisma.rentalRequest.findMany({
+    where: { tenantId },
+    omit: { tenantId: true, propertyId: true },
+    include: { property: true, payment: true },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+
 export const rentalService = {
   createRentalRequestIntoDB,
+  getMyRentalRequestsFromDB,
+  
 };

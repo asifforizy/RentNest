@@ -5,24 +5,32 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { rentalService } from "./rental.service";
 
-const createRentalRequest = catchAsync(
-  async (req: Request, res: Response) => {
-    const tenantId = req.user?.id as string;
+const createRentalRequest = catchAsync(async (req: Request, res: Response) => {
+  const tenantId = req.user?.id as string;
 
-    const result = await rentalService.createRentalRequestIntoDB(
-      tenantId,
-      req.body
-    );
+  const result = await rentalService.createRentalRequestIntoDB(  tenantId,  req.body );
 
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.CREATED,
-      message: "Rental request submitted successfully",
-      data: result,
-    });
-  }
-);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Rental request submitted successfully",
+    data: result,
+  });
+});
+
+const getMyRentalRequests = catchAsync(async (req: Request, res: Response) => {
+  const tenantId = req.user?.id as string;
+  const result = await rentalService.getMyRentalRequestsFromDB(tenantId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Rental requests retrieved successfully",
+    data: result,
+  });
+});
 
 export const rentalController = {
   createRentalRequest,
+  getMyRentalRequests,
 };
