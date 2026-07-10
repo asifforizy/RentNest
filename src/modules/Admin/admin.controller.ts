@@ -32,7 +32,16 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 
 
 
+const getAllProperties = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getAllPropertiesFromDB();
 
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "ALL Properties retrieved successfully",
+    data: result,
+  });
+});
 
 
 
@@ -40,5 +49,6 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 export const  adminController = {
     getAllUsers,
     updateUserStatus,
+    getAllProperties,
 
 }

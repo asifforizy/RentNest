@@ -35,7 +35,23 @@ const updateUserStatusIntoDB = async (id: string, payload: IUpdatedStatus) => {
 };
 
 
+
+
+const getAllPropertiesFromDB = async () => {
+  const allProperties =  prisma.property.findMany({
+    include: { category: true, landlord: { select: { id: true, name: true, email: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return allProperties
+};
+
+
+
+
+
+
 export const adminService = {
   getAllUsersFromDB,
   updateUserStatusIntoDB,
+  getAllPropertiesFromDB,
 };
