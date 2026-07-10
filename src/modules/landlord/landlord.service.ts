@@ -35,11 +35,7 @@ const getMyPropertiesFromDB = async (landlordId: string) => {
   });
 };
 
-const updatePropertyIntoDB = async (
-  id: string,
-  landlordId: string,
-  payload: CreatePropertyPayload
-) => {
+const updatePropertyIntoDB = async (id: string,landlordId: string,payload: CreatePropertyPayload) => {
   const property = await prisma.property.findUnique({ where: { id } });
 
   if (!property) {
@@ -59,8 +55,26 @@ const updatePropertyIntoDB = async (
   return result;
 };
 
+
+const deletePropertyFromDB = async (id: string, landlordId: string) => {
+  const property = await prisma.property.findUnique({ where: { id } });
+
+  if (!property) {
+    throw new Error("Property not found");
+  }
+
+  if (property.landlordId !== landlordId) {
+    throw new Error("You are not the owner of this property");
+  }
+
+  const result =  prisma.property.delete({ where: { id } });
+  return result
+};
+
+
 export const landlordService = {
   createPropertyIntoDB,
   getMyPropertiesFromDB,
-  updatePropertyIntoDB
+  updatePropertyIntoDB,
+  deletePropertyFromDB
 };

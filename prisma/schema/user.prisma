@@ -12,5 +12,7 @@ model User {
     updatedAt    DateTime   @updatedAt
 
     properties   Property[] 
+    rentalRequests RentalRequest[]
+    reviews   Review[]
     @@map("user")
 }
