@@ -1,16 +1,14 @@
-model Payment {
-  id                      String          @id @default(uuid())
-  transactionId           String          @unique
-  user User @relation(fields: [transactionId], references: [id], onDelete : Cascade)
-  amount                  Float
+model Subscription {
+  id                     String          @id @default(uuid())
+  userId          String          @unique
+  user User @relation(fields: [userId], references: [id], onDelete : Cascade)
   method                  PaymentMethod?
-  provider                PaymentProvider @default(STRIPE)
-  status                  PaymentStatus   @default(PENDING)
-  paidAt                  DateTime?
+  provider                PaymentProvider? @default(STRIPE)
+  status                  SubscriptionStatus 
+ 
+ currentPeriodEnd DateTime 
+  stripeCustomerId String 
+  stripeSubscriptionId String @unique 
   createdAt               DateTime        @default(now())
-
-  rentalRequestId         String          @unique
-  rentalRequest           RentalRequest   @relation(fields: [rentalRequestId], references: [id] , onDelete : Cascade)
-
-  @@map("payment")
+  @@map("subscription")
 }

@@ -23,11 +23,12 @@ enum RentalRequestStatus {
   CANCELLED
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
+enum SubscriptionStatus {
+  
+  ACTIVE
+  CANCELED
+  EXPIRED
+
 }
 
 enum PaymentProvider {

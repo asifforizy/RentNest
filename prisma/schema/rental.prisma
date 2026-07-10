@@ -16,7 +16,6 @@ model RentalRequest {
   tenantId String
   tenant User @relation(   fields: [tenantId],    references: [id],    onDelete: Cascade  )
 
-  payment Payment?
 
   @@unique([propertyId, tenantId])
   @@index([tenantId])
