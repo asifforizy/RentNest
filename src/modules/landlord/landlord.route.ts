@@ -10,7 +10,7 @@ const router =Router()
 
 router.post("/properties",  auth(UserRole.LANDLORD) ,lanlordController.createPropertyListing);
 router.get("/my-properties", auth(UserRole.LANDLORD) , lanlordController.getMyProperties);
-router.patch("/properties/:id", auth(UserRole.LANDLORD) , lanlordController.updateProperty);
+router.put("/properties/:id", auth(UserRole.LANDLORD) , lanlordController.updateProperty);
 router.delete("/properties/:id", auth(UserRole.LANDLORD) , lanlordController.deleteProperty);
 router.get("/requests", auth(UserRole.LANDLORD), lanlordController.getMyRentalRequests);
 router.patch("/requests/:id", auth(UserRole.LANDLORD), lanlordController.updateRentalRequestStatus);

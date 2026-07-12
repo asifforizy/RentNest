@@ -1,107 +1,206 @@
-import config from "../../config";
+import Stripe from "stripe";
+import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
-import { stripe } from "../../lib/stripe";
-import { handleChangeSubscription, handleCheckoutCompleted } from "./payment.util";
+import config from "../../config";
+import { handleCheckoutCompleted, handleCheckoutExpired, handlePaymentFailed } from "./payment.util";
+
+const stripe = new Stripe(config.stripe_secret_key as string);
 
 
-const createCheckoutSession = async (userId : string) => {
-    const transactionResult = await prisma.$transaction(async (tx) => {
 
-        const user = await tx.user.findUniqueOrThrow({
-            where : {
-                id : userId
-            },
-            include : {
-                subscription : true
-            }
-        })
-
-        //old subscriber
-        let stripeCustomerId = user.subscription?.stripeCustomerId;
-
-        if(!stripeCustomerId){
-            // new subscriber
-            const customer = await stripe.customers.create({
-                email: user.email,
-                name: user.name,
-                metadata: { userId: user.id }
-            })
-
-            stripeCustomerId = customer.id
-        }
-
-
-        const session = await stripe.checkout.sessions.create({
-            line_items : [
-                {
-                    price: config.stripe_product_id,
-                    quantity : 1
-                }
-            ],
-            mode : "subscription",
-            customer : stripeCustomerId,
-            payment_method_types : ["card"],
-            success_url : `${config.app_url}/premium?success=true`,
-            cancel_url: `${config.app_url}/payment?success=false`,
-            metadata : {userId : user.id}
-        })
-
-        return session.url
+const createCheckoutSession = async (userId: string, rentalRequestId: string) => {
+  return await prisma.$transaction(async (tx) => {
+  
+    const rentalRequest = await tx.rentalRequest.findUnique({
+      where: { id: rentalRequestId },
+      include: { property: true, payment: true },
     });
 
-    return {
-        paymentUrl : transactionResult
+    if (!rentalRequest) {
+      throw new Error( "Rental request not found");
     }
-}
 
-
-const handleWebhook = async (payload : Buffer, signature : string) => {
-    const endpointSecret = config.stripe_secret_key
-    const event = stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        endpointSecret
-    );
-
-
-    switch (event.type) {
-        case 'checkout.session.completed':
-            await handleCheckoutCompleted(event.data.object)
-            break;
-        case 'customer.subscription.updated':
-            await handleChangeSubscription(event.data.object)
-            break;
-
-        case 'customer.subscription.deleted':
-            await handleChangeSubscription(event.data.object)
-            break;
  
-        default:
-            console.log(`No events matched. Unhandled event type ${event.type}.`);
-            break;
+    if (rentalRequest.tenantId !== userId) {
+      throw new Error( "This is not your rental request");
     }
-}
 
-const getSubscriptionStatus = async (userId : string) => {
-    const isSubscriptionExist = await prisma.subscription.findUniqueOrThrow({
-        where : {
-            userId
-        }
+    if (rentalRequest.status !== "APPROVED") {
+      throw new Error(
+        
+        "Rental request must be approved before payment"
+      );
+    }
+
+   
+    if (rentalRequest.payment?.status === "COMPLETED") {
+      throw new Error("This rental has already been paid for");
+    }
+
+   
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+
+    let stripeCustomerId = user.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name,
+        metadata: { userId: user.id },
+      });
+      stripeCustomerId = customer.id;
+      await tx.user.update({
+        where: { id: userId },
+        data: { stripeCustomerId },
+      });
+    }
+
+
+    const amount = rentalRequest.property.rentPrice;
+    if (!amount || amount <= 0) {
+      throw new Error( "Invalid rent amount on property");
+    }
+
+  
+    const payment = await tx.payment.upsert({
+      where: { rentalRequestId },
+      update: {
+        amount,
+        status: "PENDING",
+        provider: "STRIPE",
+      },
+      create: {
+        transactionId: `txn_${rentalRequestId}_${Date.now()}`,
+        amount,
+        provider: "STRIPE",
+        status: "PENDING",
+        rentalRequestId,
+      },
     });
 
-    const isActive = isSubscriptionExist.status === "ACTIVE" && isSubscriptionExist.currentPeriodEnd && new Date(isSubscriptionExist.currentPeriodEnd) > new Date();
+   
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer: stripeCustomerId,
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: Math.round(amount * 100), 
+            product_data: {
+              name: `Rent Payment - ${rentalRequest.property.title}`,
+              description: `Rental request #${rentalRequest.id}`,
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${config.app_url}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${config.app_url}/payments/cancel`,
+      metadata: {
+        paymentId: payment.id,
+        rentalRequestId: rentalRequest.id,
+        userId: user.id,
+      },
+      payment_intent_data: {
+        metadata: {
+          paymentId: payment.id,
+          rentalRequestId: rentalRequest.id,
+          userId: user.id,
+        },
+      },
+    });
 
-    return {
-        status : isSubscriptionExist.status,
-        isSubscribed : isActive,
-        currentPeriodEnd : isSubscriptionExist.currentPeriodEnd
-    }
-}
+ 
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: { stripeCheckoutSessionId: session.id },
+    });
+
+    return session.url;
+  });
+};
 
 
+const handleWebhook = async (payload: Buffer, signature: string) => {
+ 
+  const endpointSecret = config.stripe_webhook_secret_key as string;
 
-export const subscriptionServices = {
-    createCheckoutSession,
-    handleWebhook,
-    getSubscriptionStatus
-}
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(payload, signature, endpointSecret);
+  } catch (err: any) {
+    throw new Error( `Webhook signature verification failed: ${err.message}`);
+  }
+
+  switch (event.type) {
+    case "checkout.session.completed":
+      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+      break;
+
+    case "checkout.session.expired":
+      await handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+      break;
+
+    case "payment_intent.payment_failed":
+      await handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
+      break;
+
+    default:
+      console.log(`Unhandled Stripe event type: ${event.type}`);
+      break;
+  }
+
+  return { received: true };
+};
+
+
+const getMyPayments = async (userId: string, role: string) => {
+
+  const where =
+    role === "LANDLORD"
+      ? { rentalRequest: { property: { landlordId: userId } } }
+      : { rentalRequest: { tenantId: userId } };
+
+  return prisma.payment.findMany({
+    where,
+    include: {
+      rentalRequest: {
+        include: { property: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+const getPaymentById = async (userId: string, role: string, paymentId: string) => {
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: {
+      rentalRequest: {
+        include: { property: true, tenant: true },
+      },
+    },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  const isTenant = payment.rentalRequest.tenantId === userId;
+  const isLandlord = payment.rentalRequest.property.landlordId === userId;
+  const isAdmin = role === "ADMIN";
+
+  if (!isTenant && !isLandlord && !isAdmin) {
+    throw new Error("You do not have access to this payment");
+  }
+
+  return payment;
+};
+
+export const paymentServices = {
+  createCheckoutSession,
+  handleWebhook,
+  getMyPayments,
+  getPaymentById,
+};

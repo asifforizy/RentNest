@@ -21,16 +21,16 @@ enum RentalRequestStatus {
   APPROVED
   REJECTED
   CANCELLED
-}
-
-enum SubscriptionStatus {
-  
   ACTIVE
-  CANCELED
-  EXPIRED
-
+  COMPLETED
 }
 
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
 enum PaymentProvider {
   STRIPE
   SSLCOMMERZ

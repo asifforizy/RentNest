@@ -1,87 +1,91 @@
-import Stripe from "stripe"
-import { SubscriptionStatus } from "../../../generated/prisma/enums"
-import { prisma } from "../../lib/prisma"
-import { stripe } from "../../lib/stripe"
-
-export const getPeriodEnd = (payload: Stripe.Subscription) => {
-    const currentPeriodEndInMilliseconds = payload.items.data[0]?.current_period_end!
-
-    const currentPeriodEnd = new Date(currentPeriodEndInMilliseconds * 1000)
-
-    return currentPeriodEnd
-}
+import Stripe from "stripe";
+import { prisma } from "../../lib/prisma";
 
 export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) => {
-    const userId = session.metadata?.userId
-    const stripeCustomerId = session.customer as string
-    const stripeSubscriptionId = session.subscription as string;
-
-    if (!userId || !stripeSubscriptionId || !stripeCustomerId) {
-        console.log("Webhook : Missing values For Creating Checkout Session");
-        return;
-    }
-
-    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-
-
-    const currentPeriodEnd = getPeriodEnd(stripeSubscription)
+  const paymentId = session.metadata?.paymentId;
+  const rentalRequestId = session.metadata?.rentalRequestId;
+ 
+  if (!paymentId || !rentalRequestId) {
+    console.log("Webhook: checkout.session.completed missing metadata", session.id);
+    return;
+  }
+ 
+  // Idempotency guard - Stripe may deliver the same event more than once
+  const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
 
 
-    await prisma.subscription.upsert({
-        where: {
-            userId
-        },
-
-        create: {
-            userId,
-            stripeCustomerId,
-            stripeSubscriptionId,
-            status: "ACTIVE",
-            currentPeriodEnd,
-        },
-
-        update: {
-            stripeCustomerId,
-            stripeSubscriptionId,
-            status: "ACTIVE",
-            currentPeriodEnd,
-        }
-
-    })
-
-}
-
-export const handleChangeSubscription = async (payload: Stripe.Subscription) => {
-
-    const stripeSubscriptionId = payload.id;
-
-    const status =
-        (payload.status === "active" || payload.status === "trialing") ? SubscriptionStatus.ACTIVE :
-            payload.status === "canceled" ? SubscriptionStatus.CANCELED :
-                SubscriptionStatus.EXPIRED
-
-    const currentPeriodEnd = getPeriodEnd(payload)
-
-    const isSubscriptionExist = await prisma.subscription.findUnique({
-        where: {
-            stripeSubscriptionId
-        }
-    })
-
-    if (!isSubscriptionExist) {
-        console.log(`Webhook : No Subscription found for subscription id : ${stripeSubscriptionId}`);
-
-        return;
-    }
-
-    await prisma.subscription.update({
-        where: {
-            stripeSubscriptionId
-        },
-        data: {
-            status,
-            currentPeriodEnd
-        }
-    })
-
-}
+  if (!existing) {
+    console.log(`Webhook: no Payment found for id ${paymentId}`);
+    return;
+  }
+  if (existing.status === "COMPLETED") {
+    return; // already processed, nothing to do
+  }
+ 
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+ 
+  await prisma.$transaction([
+    prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: "COMPLETED",
+        paidAt: new Date(),
+        method: "CARD", // this checkout flow is configured card-only; adjust if you add more payment_method_types
+        stripePaymentIntentId: paymentIntentId,
+      },
+    }),
+    prisma.rentalRequest.update({
+      where: { id: rentalRequestId },
+      data: { status: "ACTIVE" },
+    }),
+  ]);
+};
+ 
+/* -------------------------------------------------------------------------- */
+/*  checkout.session.expired                                                  */
+/*  Fires if the tenant abandons the hosted checkout page without paying.     */
+/* -------------------------------------------------------------------------- */
+ 
+export const handleCheckoutExpired = async (session: Stripe.Checkout.Session) => {
+  const paymentId = session.metadata?.paymentId;
+  if (!paymentId) {
+    console.log("Webhook: checkout.session.expired missing metadata", session.id);
+    return;
+  }
+ 
+  const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
+  if (!existing || existing.status === "COMPLETED") {
+    return; // never downgrade a completed payment
+  }
+ 
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: { status: "FAILED" },
+  });
+};
+ 
+/* -------------------------------------------------------------------------- */
+/*  payment_intent.payment_failed                                             */
+/*  Fires when a card is declined or a charge otherwise fails.                */
+/* -------------------------------------------------------------------------- */
+ 
+export const handlePaymentFailed = async (intent: Stripe.PaymentIntent) => {
+  const paymentId = intent.metadata?.paymentId;
+  if (!paymentId) {
+    console.log("Webhook: payment_intent.payment_failed missing metadata", intent.id);
+    return;
+  }
+ 
+  const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
+  if (!existing || existing.status === "COMPLETED") {
+    return;
+  }
+ 
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: { status: "FAILED" },
+  });
+};

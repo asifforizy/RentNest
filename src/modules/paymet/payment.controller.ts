@@ -3,43 +3,68 @@ import { catchAsync } from "../../utils/catchAsync"
 
 import { sendResponse } from "../../utils/sendResponse"
 import httpStatus from 'http-status';
-import { subscriptionServices } from "./payment.service";
+import { paymentServices } from "./payment.service";
 
-const createCheckoutSession = catchAsync(async(req : Request, res : Response)=>{
-    const userId = req.user?.id as string 
-
-    const result = await subscriptionServices.createCheckoutSession(userId)
-
-    sendResponse(res,{
+const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const { rentalRequestId } = req.body;
+ 
+  const paymentUrl = await paymentServices.createCheckoutSession(userId, rentalRequestId);
+ 
+  sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: "Checkout completed successfully",
+    message: "Checkout session created successfully",
+    data: { paymentUrl },
+  });
+});
+
+
+const handleWebhook = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body as Buffer; // raw body - only valid if express.raw() was used on this route
+  const signature = req.headers["stripe-signature"] as string;
+ 
+  const result = await paymentServices.handleWebhook(payload, signature);
+ 
+  // Stripe just needs a 200 - it does not care about your response envelope
+  res.status(httpStatus.OK).json(result);
+});
+
+
+const getMyPayments = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const role = req.user?.role as string;
+ 
+  const result = await paymentServices.getMyPayments(userId, role);
+ 
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Payment history retrieved successfully",
     data: result,
-    })
-})
+  });
+});
 
 
-const handleWebhook = catchAsync(
-    async( req : Request, res : Response) => {
-        const event = req.body as Buffer;
-        const signature = req.headers['stripe-signature']!;
-
-        await subscriptionServices.handleWebhook(event, signature as string)
-
-        sendResponse(res, {
-            success : true,
-            statusCode : 200,
-            message : "Webhook triggered successfully",
-            data : null
-        })
-    }
-)
-
-
-
-
-
+const getPaymentById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const role = req.user?.role as string;
+  const { id } = req.params;
+ 
+  const result = await paymentServices.getPaymentById(userId, role, id as string);
+ 
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Payment retrieved successfully",
+    data: result,
+  });
+});
+ 
 export const paymentController = {
-    createCheckoutSession,
-    handleWebhook
-}
+  createCheckoutSession,
+  handleWebhook,
+  getMyPayments,
+  getPaymentById,
+};
+ 
