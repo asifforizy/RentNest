@@ -10,7 +10,6 @@ export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) 
     return;
   }
  
-  // Idempotency guard - Stripe may deliver the same event more than once
   const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
 
 
@@ -19,7 +18,7 @@ export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) 
     return;
   }
   if (existing.status === "COMPLETED") {
-    return; // already processed, nothing to do
+    return;
   }
  
   const paymentIntentId =
@@ -33,7 +32,7 @@ export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) 
       data: {
         status: "COMPLETED",
         paidAt: new Date(),
-        method: "CARD", // this checkout flow is configured card-only; adjust if you add more payment_method_types
+        method: "CARD", 
         stripePaymentIntentId: paymentIntentId,
       },
     }),
@@ -44,10 +43,7 @@ export const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) 
   ]);
 };
  
-/* -------------------------------------------------------------------------- */
-/*  checkout.session.expired                                                  */
-/*  Fires if the tenant abandons the hosted checkout page without paying.     */
-/* -------------------------------------------------------------------------- */
+
  
 export const handleCheckoutExpired = async (session: Stripe.Checkout.Session) => {
   const paymentId = session.metadata?.paymentId;
@@ -58,7 +54,7 @@ export const handleCheckoutExpired = async (session: Stripe.Checkout.Session) =>
  
   const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
   if (!existing || existing.status === "COMPLETED") {
-    return; // never downgrade a completed payment
+    return;
   }
  
   await prisma.payment.update({
@@ -67,10 +63,7 @@ export const handleCheckoutExpired = async (session: Stripe.Checkout.Session) =>
   });
 };
  
-/* -------------------------------------------------------------------------- */
-/*  payment_intent.payment_failed                                             */
-/*  Fires when a card is declined or a charge otherwise fails.                */
-/* -------------------------------------------------------------------------- */
+
  
 export const handlePaymentFailed = async (intent: Stripe.PaymentIntent) => {
   const paymentId = intent.metadata?.paymentId;

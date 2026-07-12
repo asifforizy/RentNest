@@ -21,12 +21,9 @@ const createCheckoutSession = catchAsync(async (req: Request, res: Response) => 
 
 
 const handleWebhook = catchAsync(async (req: Request, res: Response) => {
-  const payload = req.body as Buffer; // raw body - only valid if express.raw() was used on this route
+  const payload = req.body as Buffer; 
   const signature = req.headers["stripe-signature"] as string;
- 
   const result = await paymentServices.handleWebhook(payload, signature);
- 
-  // Stripe just needs a 200 - it does not care about your response envelope
   res.status(httpStatus.OK).json(result);
 });
 

@@ -11,6 +11,7 @@ import { propertyRoutes } from "./modules/properties/properties.route";
 import { rentalRoutes } from "./modules/rental/rental.route";
 import { adminRoutes } from "./modules/Admin/admin.route";
 import { paymentRoutes } from './modules/paymet/payment.route';
+import { reviewRoutes } from "./modules/reviews/reviews.router";
 
 
 
@@ -55,6 +56,7 @@ app.use("/api/landlord",lanlordRoutes)
 app.use("/api/rentals",rentalRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/payments",paymentRoutes)
+app.use("/api/reviews",reviewRoutes)
 
 
 

@@ -95,9 +95,7 @@ const updateRentalRequestStatusIntoDB = async (id: string, landlordId: string,pa
     throw new Error( "You do not own the property for this request");
   }
 
-  if (rentalRequest.status !== "PENDING") {
-    throw new Error("This request has already been processed");
-  }
+  
 
   return prisma.rentalRequest.update({
     where: { id },
