@@ -5,7 +5,7 @@ export interface RegisterUserPayload {
   profilePhoto?: string;
   phone?: string;
   address?: string;
-  role?: "TENANT" | "LANDLORD" | "ADMIN";
+  role?: "TENANT" | "LANDLORD";
 }
 
 export interface IloginUser {

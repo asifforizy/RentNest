@@ -6,6 +6,8 @@ import { jwtUtils } from "../../utils/jwt";
 
 const registeruserIntoDB = async (payload: RegisterUserPayload) => {
   const { name, email, password, profilePhoto, phone, address, role } = payload;
+  
+
   const isUserExist = await prisma.user.findUnique({
     where: { email },
   });
@@ -13,6 +15,7 @@ const registeruserIntoDB = async (payload: RegisterUserPayload) => {
   if (isUserExist) {
     throw new Error("user ready exists with this email");
   }
+  const finalRole = role === "LANDLORD" ? "LANDLORD" : "TENANT";
 
   const hashedPasswod = await bcrypt.hash(
     password,
@@ -27,7 +30,7 @@ const registeruserIntoDB = async (payload: RegisterUserPayload) => {
       profilePhoto,
       phone,
       address,
-      role,
+      role : finalRole,
     },
   });
 
