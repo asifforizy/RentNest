@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import config from "../../config";
 import { handleCheckoutCompleted, handleCheckoutExpired, handlePaymentFailed } from "./payment.util";
@@ -158,9 +157,8 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
 const getMyPayments = async (userId: string, role: string) => {
 
   const where =
-    role === "LANDLORD"
-      ? { rentalRequest: { property: { landlordId: userId } } }
-      : { rentalRequest: { tenantId: userId } };
+  role === "ADMIN"? {}: role === "LANDLORD"? { rentalRequest: { property: { landlordId: userId } } }: { rentalRequest: { tenantId: userId } };
+
 
   return prisma.payment.findMany({
     where,
@@ -198,9 +196,72 @@ const getPaymentById = async (userId: string, role: string, paymentId: string) =
   return payment;
 };
 
+
+
+
+const confirmPayment = async (sessionId: string) => {
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+  const paymentId = session.metadata?.paymentId;
+  const rentalRequestId = session.metadata?.rentalRequestId;
+
+  if (!paymentId || !rentalRequestId) {
+    throw new Error("Invalid session — missing metadata");
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status === "COMPLETED") {
+    return payment;
+  }
+
+  if (session.payment_status === "paid") {
+    const paymentIntentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : undefined;
+
+    const [updatedPayment] = await prisma.$transaction([
+      prisma.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: "COMPLETED",
+          paidAt: new Date(),
+          method: "CARD",
+          stripePaymentIntentId: paymentIntentId,
+        },
+      }),
+      prisma.rentalRequest.update({
+        where: { id: rentalRequestId },
+        data: {
+          status: "ACTIVE",
+        },
+      }),
+    ]);
+
+    return updatedPayment;
+  }
+
+  return payment;
+};
+
+
+
+
+
+
+
+
 export const paymentServices = {
   createCheckoutSession,
   handleWebhook,
   getMyPayments,
   getPaymentById,
+  confirmPayment,
 };

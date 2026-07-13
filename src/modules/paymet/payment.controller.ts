@@ -57,11 +57,25 @@ const getPaymentById = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+
+const confirmPayment = catchAsync(async (req: Request, res: Response) => {
+  const { sessionId } = req.body;
+  const result = await paymentServices.confirmPayment(sessionId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Payment confirmed successfully",
+    data: result,
+  });
+});
  
 export const paymentController = {
   createCheckoutSession,
   handleWebhook,
   getMyPayments,
   getPaymentById,
+  confirmPayment
 };
  
