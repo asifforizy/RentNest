@@ -45,7 +45,7 @@ app.use(
 );
 
 app.get("/", async (req: Request, res: Response) => {
-  res.send("hello world");
+  res.send("RentNest");
 });
 
 
