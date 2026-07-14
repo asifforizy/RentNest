@@ -62,11 +62,6 @@ app.use("/api/reviews",reviewRoutes)
 
 
 
-
-
-
-
-
 app.use(notFound)
 app.use(globalErrorHandler)
 export default app;
