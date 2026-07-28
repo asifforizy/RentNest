@@ -1,6 +1,6 @@
 # 🏠 RentNest
 
-> **Find & List Rental Properties with Ease**
+Find & List Rental Properties with Ease
 
 🔗 **Live Demo:** https://rent-nest-beta.vercel.app/
 
