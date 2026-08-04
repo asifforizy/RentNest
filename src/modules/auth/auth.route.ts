@@ -11,6 +11,7 @@ router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
 router.get("/me", auth(UserRole.ADMIN, UserRole.LANDLORD,UserRole.TENANT), authController.getMyProfile);
 router.patch("/update-my-profile", auth(UserRole.ADMIN, UserRole.LANDLORD,UserRole.TENANT), authController.updateMyProfile);
+router.get("/refresh-token", auth(UserRole.ADMIN, UserRole.LANDLORD,UserRole.TENANT), authController.refreshToken);
 
 
 export const authRoutes = router;
