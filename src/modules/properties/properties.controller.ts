@@ -5,20 +5,20 @@ import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 
 const getAllProperties = catchAsync(async (req: Request, res: Response) => {
-  const result = await propertyService.getAllPropertiesFromDB(req.query);
+   const result = await propertyService.getAllPropertiesFromDB();
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "Properties retrieved successfully",
-    meta: result.meta,
-    data: result.data,
+    data: result,
   });
 });
 
 const getPropertyById = catchAsync(async (req: Request, res: Response) => {
-
-  const result = await propertyService.getPropertyByIdFromDB(req.params.id as string);
+  const result = await propertyService.getPropertyByIdFromDB(
+    req.params.id as string
+  );
 
   sendResponse(res, {
     success: true,
