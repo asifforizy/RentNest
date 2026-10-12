@@ -5,14 +5,14 @@ import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 
 const getAllProperties = catchAsync(async (req: Request, res: Response) => {
-
-  const result = await propertyService.getAllPropertiesFromDB();
+  const result = await propertyService.getAllPropertiesFromDB(req.query);
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "Properties retrieved successfully",
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
